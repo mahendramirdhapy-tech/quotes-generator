@@ -1,11 +1,11 @@
 export default function Header({ user, onLoginClick, onLogout }) {
   return (
-    <header className="bg-white shadow-sm border-b">
-      <div className="container mx-auto px-4 py-4">
-        <div className="flex justify-between items-center">
-          <div className="flex items-center space-x-2">
-            <div className="w-8 h-8 bg-indigo-600 rounded-lg"></div>
-            <span className="text-xl font-bold text-gray-800">QuoteGen</span>
+    <header className="header">
+      <div className="container">
+        <div className="header-content">
+          <div className="logo">
+            <div className="logo-icon"></div>
+            <span className="logo-text">QuoteGen</span>
           </div>
           
           <div className="flex items-center space-x-4">
@@ -14,7 +14,7 @@ export default function Header({ user, onLoginClick, onLogout }) {
                 <span className="text-gray-700">Hello, {user.email}</span>
                 <button
                   onClick={onLogout}
-                  className="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg transition duration-200"
+                  className="btn btn-small bg-gray-500 hover:bg-gray-600 text-white"
                 >
                   Logout
                 </button>
@@ -22,7 +22,7 @@ export default function Header({ user, onLoginClick, onLogout }) {
             ) : (
               <button
                 onClick={onLoginClick}
-                className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-lg font-medium transition duration-200"
+                className="btn btn-small bg-indigo-600 hover:bg-indigo-700 text-white"
               >
                 Login
               </button>
