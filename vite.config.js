@@ -3,8 +3,11 @@ import react from '@vitejs/plugin-react'
 
 export default defineConfig({
   plugins: [react()],
-  base: '/quotes-generator/',
   build: {
-    outDir: 'dist'
+    outDir: 'dist',
+    sourcemap: false
+  },
+  server: {
+    port: 3000
   }
 })
