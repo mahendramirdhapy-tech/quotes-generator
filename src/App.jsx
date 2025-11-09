@@ -16,6 +16,10 @@ function App() {
     const getSession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       setUser(session?.user || null);
+      if (session?.user) {
+        await loadUserQuotes(session.user.id);
+        await checkTodaysQuotes(session.user.id);
+      }
     };
 
     getSession();
@@ -27,6 +31,9 @@ function App() {
         if (session?.user) {
           await loadUserQuotes(session.user.id);
           await checkTodaysQuotes(session.user.id);
+        } else {
+          setQuotes([]);
+          setTodaysQuotes(0);
         }
       }
     );
@@ -72,8 +79,6 @@ function App() {
         onLoginClick={() => setShowLogin(true)}
         onLogout={async () => {
           await supabase.auth.signOut();
-          setQuotes([]);
-          setTodaysQuotes(0);
         }}
       />
       
