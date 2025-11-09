@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { supabase } from '../lib/supabase';
 
 export default function QuoteForm({ user, todaysQuotes, onNewQuote, onLoginRequired }) {
   const [keyword, setKeyword] = useState('');
@@ -7,9 +8,9 @@ export default function QuoteForm({ user, todaysQuotes, onNewQuote, onLoginRequi
 
   const generateQuoteWithFallback = async (keyword, attempt = 0) => {
     const models = [
-      'gpt-3.5-turbo',
-      'gpt-4',
-      'claude-instant-v1'
+      'openai/gpt-3.5-turbo',
+      'google/palm-2-chat-bison',
+      'meta-llama/llama-2-13b-chat'
     ];
 
     const model = models[attempt];
@@ -19,15 +20,12 @@ export default function QuoteForm({ user, todaysQuotes, onNewQuote, onLoginRequi
     }
 
     try {
-      const prompt = `Generate an inspiring quote about "${keyword}". Respond with JSON only: {"quote": "the quote text", "author": "author name"}`;
-      
-      // OpenRouter API call
       const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${import.meta.env.VITE_OPENROUTER_API_KEY}`,
           'Content-Type': 'application/json',
-          'HTTP-Referer': window.location.href,
+          'HTTP-Referer': window.location.origin,
           'X-Title': 'AI Quotes Generator'
         },
         body: JSON.stringify({
@@ -39,7 +37,7 @@ export default function QuoteForm({ user, todaysQuotes, onNewQuote, onLoginRequi
             },
             {
               role: 'user',
-              content: prompt
+              content: `Generate an inspiring quote about "${keyword}". Respond with JSON only: {"quote": "the quote text", "author": "author name"}`
             }
           ],
           max_tokens: 150,
@@ -126,6 +124,7 @@ export default function QuoteForm({ user, todaysQuotes, onNewQuote, onLoginRequi
       onNewQuote(savedQuote);
       setKeyword('');
     } catch (error) {
+      console.error('Quote generation error:', error);
       alert('Error generating quote: ' + error.message);
     } finally {
       setIsGenerating(false);
@@ -134,10 +133,14 @@ export default function QuoteForm({ user, todaysQuotes, onNewQuote, onLoginRequi
 
   const copyToClipboard = async () => {
     if (currentQuote) {
-      await navigator.clipboard.writeText(
-        `"${currentQuote.quote}" - ${currentQuote.author}`
-      );
-      alert('Quote copied to clipboard!');
+      try {
+        await navigator.clipboard.writeText(
+          `"${currentQuote.quote}" - ${currentQuote.author}`
+        );
+        alert('Quote copied to clipboard!');
+      } catch (err) {
+        console.error('Failed to copy: ', err);
+      }
     }
   };
 
@@ -147,6 +150,7 @@ export default function QuoteForm({ user, todaysQuotes, onNewQuote, onLoginRequi
         await navigator.share({
           title: 'AI Generated Quote',
           text: `"${currentQuote.quote}" - ${currentQuote.author}`,
+          url: window.location.href,
         });
       } catch (error) {
         console.log('Error sharing:', error);
@@ -169,13 +173,14 @@ export default function QuoteForm({ user, todaysQuotes, onNewQuote, onLoginRequi
             placeholder="e.g., motivation, success, love..."
             className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200"
             disabled={isGenerating}
+            required
           />
         </div>
         
         <button
           type="submit"
-          disabled={isGenerating || !keyword.trim() || todaysQuotes >= 5}
-          className="w-full bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-400 text-white py-3 px-6 rounded-lg font-medium transition duration-200"
+          disabled={isGenerating || !keyword.trim() || (user && todaysQuotes >= 5)}
+          className="w-full bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-400 text-white py-3 px-6 rounded-lg font-medium transition duration-200 disabled:cursor-not-allowed"
         >
           {isGenerating ? 'Generating Quote...' : 'Generate Quote'}
         </button>
@@ -194,6 +199,9 @@ export default function QuoteForm({ user, todaysQuotes, onNewQuote, onLoginRequi
                 onClick={copyToClipboard}
                 className="flex items-center space-x-2 bg-white hover:bg-gray-50 text-gray-700 px-4 py-2 rounded-lg border border-gray-300 transition duration-200"
               >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                </svg>
                 <span>Copy</span>
               </button>
               {navigator.share && (
@@ -201,6 +209,9 @@ export default function QuoteForm({ user, todaysQuotes, onNewQuote, onLoginRequi
                   onClick={shareQuote}
                   className="flex items-center space-x-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg transition duration-200"
                 >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+                  </svg>
                   <span>Share</span>
                 </button>
               )}
